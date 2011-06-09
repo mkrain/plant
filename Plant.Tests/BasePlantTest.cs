@@ -145,7 +145,7 @@ namespace Plant.Tests
         testPlant.DefineConstructionOf<House>(new { Color = "Red", SquareFoot = 3000 }, 
             (h) => h.Summary = h.Color + h.SquareFoot);
 
-        Assert.AreEqual("Blue", testPlant.Create<House>(new { Color = "Blue" }).Color);
+        Assert.AreEqual("Blue3000", testPlant.Create<House>(new { Color = "Blue" }).Summary);
     }
 
     [Test]
