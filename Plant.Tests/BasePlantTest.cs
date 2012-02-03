@@ -36,6 +36,14 @@ namespace Plant.Tests
     }
 
     [Test]
+    public void Should_Create_Instance_With_Null_Value()
+    {
+      var testPlant = new BasePlant();
+      testPlant.DefinePropertiesOf<Person>(new { FirstName = "Barbara", LastName = (string)null });
+      Assert.IsNull(testPlant.Create<Person>().LastName);
+    }
+
+    [Test]
     [ExpectedException(typeof(PropertyNotFoundException))]
     public void Should_Throw_PropertyNotFound_Exception_When_Given_Invalid_Property()
     {

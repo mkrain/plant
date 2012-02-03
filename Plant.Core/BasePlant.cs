@@ -88,6 +88,8 @@ namespace Plant.Core
             if (instanceProperty == null) throw new PropertyNotFoundException(property.Name, properties[property]);
 
             var value = properties[property];
+            if (value == null)
+                return;
             if (typeof(ILazyProperty).IsAssignableFrom(value.GetType()))
               AssignLazyPropertyResult(instance, instanceProperty, value);
             else if(typeof(ISequence).IsAssignableFrom(value.GetType()))
