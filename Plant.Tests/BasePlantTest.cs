@@ -36,6 +36,30 @@ namespace Plant.Tests
     }
 
     [Test]
+    public void Should_Create_Instance_With_Null_Value()
+    {
+      var testPlant = new BasePlant();
+      testPlant.DefinePropertiesOf<Person>(new { FirstName = "Barbara", LastName = (string)null });
+      Assert.IsNull(testPlant.Create<Person>().LastName);
+    }
+
+    [Test]
+    public void Should_Create_Instance_With_Default_Properties_Specified_By_Instance()
+    {
+      var testPlant = new BasePlant();
+      testPlant.DefinePropertiesOf(new Person { FirstName = "James" });
+      Assert.AreEqual("James", testPlant.Create<Person>().FirstName);
+    }
+
+    [Test]
+    public void Should_Create_Instance_With_Requested_Properties_Specified_By_Instance()
+    {
+        var testPlant = new BasePlant();
+        testPlant.DefinePropertiesOf(new Person { FirstName = "David" });
+        Assert.AreEqual("James", testPlant.Create(new Person { FirstName = "James" }).FirstName);
+    }
+
+    [Test]
     [ExpectedException(typeof(PropertyNotFoundException))]
     public void Should_Throw_PropertyNotFound_Exception_When_Given_Invalid_Property()
     {

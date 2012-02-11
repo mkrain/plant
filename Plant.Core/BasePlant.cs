@@ -57,6 +57,11 @@ namespace Plant.Core
       return Activator.CreateInstance<T>();
     }
 
+    public virtual T Create<T>(T userSpecifiedProperties)
+    {
+        return Create<T>((object)userSpecifiedProperties);
+    }
+
     public virtual T Create<T>(object userSpecifiedProperties = null)
     {
       var userSpecifiedPropertyList = ToPropertyList(userSpecifiedProperties);
@@ -88,6 +93,8 @@ namespace Plant.Core
             if (instanceProperty == null) throw new PropertyNotFoundException(property.Name, properties[property]);
 
             var value = properties[property];
+            if (value == null)
+                return;
             if (typeof(ILazyProperty).IsAssignableFrom(value.GetType()))
               AssignLazyPropertyResult(instance, instanceProperty, value);
             else if(typeof(ISequence).IsAssignableFrom(value.GetType()))
@@ -135,6 +142,11 @@ namespace Plant.Core
     {
         DefinePropertiesOf<T>(defaults);
         postBuildActions[typeof (T)] = afterPropertyPopulation;
+    }
+    
+    public virtual void DefinePropertiesOf<T>(T defaults)
+    {
+        DefinePropertiesOf<T>((object)defaults);
     }
 
     public virtual void DefinePropertiesOf<T>(object defaults)
