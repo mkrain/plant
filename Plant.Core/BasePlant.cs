@@ -4,12 +4,13 @@ using System.Linq;
 using System.Reflection;
 using Properties = System.Collections.Generic.IDictionary<Plant.Core.PropertyData, object>;
 using Blueprints = System.Collections.Generic.Dictionary<System.Type, System.Collections.Generic.IDictionary<Plant.Core.PropertyData, object>>;
-
+using Variations = System.Collections.Generic.Dictionary<string, System.Collections.Generic.IDictionary<Plant.Core.PropertyData, object>>;
 
 namespace Plant.Core
 {
   public class BasePlant
   {
+    private readonly Variations propertyVariations = new Variations();
     private readonly Blueprints propertyBlueprints = new Blueprints();
     private readonly Blueprints constructorBlueprints = new Blueprints();
     private readonly IDictionary<Type, CreationStrategy> creationStrategies = new Dictionary<Type, CreationStrategy>();
@@ -57,12 +58,17 @@ namespace Plant.Core
       return Activator.CreateInstance<T>();
     }
 
+    public virtual T Create<T>(string variation)
+    {
+        return Create<T>(null, variation);
+    }
+
     public virtual T Create<T>(T userSpecifiedProperties)
     {
         return Create<T>((object)userSpecifiedProperties);
     }
 
-    public virtual T Create<T>(object userSpecifiedProperties = null)
+    public virtual T Create<T>(object userSpecifiedProperties = null, string variation = null)
     {
       var userSpecifiedPropertyList = ToPropertyList(userSpecifiedProperties);
 
@@ -71,12 +77,22 @@ namespace Plant.Core
         constructedObject = CreateViaConstructor<T>(userSpecifiedPropertyList);
       else
         constructedObject = CreateViaProperties<T>(userSpecifiedPropertyList);
-      
+
+      UpdateProperties<T>(constructedObject, variation);
+
       if (postBuildActions.ContainsKey(typeof(T)))
         ((Action<T>)postBuildActions[typeof (T)])(constructedObject);
         
       return constructedObject;
     }
+    
+    private void UpdateProperties<T>(T constructedObject, string variation)
+    {
+        if (string.IsNullOrEmpty(variation))
+            return;
+
+        SetProperties(propertyVariations[string.Format("{0}{1}", typeof(T), variation)], constructedObject);
+    } 
 
     private CreationStrategy StrategyFor<T>()
     {
@@ -156,6 +172,16 @@ namespace Plant.Core
         sequenceValues.Add(typeof(T), 0);
     }
 
+    public virtual void DefineVariationOf<T>(string variation, T defaults)
+    {
+        DefineVariationOf<T>(variation, (object)defaults);
+    }
+
+    public virtual void DefineVariationOf<T>(string variation, object defaults)
+    {
+        propertyVariations.Add(string.Format("{0}{1}", typeof(T), variation), ToPropertyList(defaults));
+    }
+
     public void DefineConstructionOf<T>(object defaults, Action<T> afterCtorPopulation)
     {
         DefineConstructionOf<T>(defaults);
@@ -182,10 +208,10 @@ namespace Plant.Core
     public BasePlant WithBlueprintsFromAssemblyOf<T>()
     {
       var assembly = typeof(T).Assembly;
-      var blueprintTypes = assembly.GetTypes().Where(t => typeof(Blueprint).IsAssignableFrom(t));
+      var blueprintTypes = assembly.GetTypes().Where(t => typeof(IBlueprint).IsAssignableFrom(t));
       blueprintTypes.ToList().ForEach(blueprintType =>
                                     {
-                                      var blueprint = (Blueprint)Activator.CreateInstance(blueprintType);
+                                      var blueprint = (IBlueprint)Activator.CreateInstance(blueprintType);
                                       blueprint.SetupPlant(this);
                                     });
       return this;

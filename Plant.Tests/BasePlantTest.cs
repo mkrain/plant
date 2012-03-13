@@ -11,6 +11,30 @@ namespace Plant.Tests
   public class BasePlantTest
   {
     [Test]
+    public void Should_Create_Variation_Of_Specified_Type()
+    {
+        var plant = new BasePlant();
+        plant.DefinePropertiesOf<Person>(new { FirstName = "" });
+        plant.DefineVariationOf<Person>("My",new { FirstName = "My" });
+        plant.DefineVariationOf<Person>("Her", new { FirstName = "Her" });
+
+        Assert.IsInstanceOf(typeof(Person), plant.Create<Person>());
+        Assert.IsInstanceOf(typeof(Person), plant.Create<Person>("My"));
+        Assert.IsInstanceOf(typeof(Person), plant.Create<Person>("Her"));
+    }
+
+    [Test]
+    public void Should_Create_Variation_Of_Specified_Type_With_Correct_Data()
+    {
+        var plant = new BasePlant();
+        plant.DefinePropertiesOf<Person>(new { FirstName = "" });
+        plant.DefineVariationOf<Person>("My", new { FirstName = "My" });
+
+        var person = plant.Create<Person>("My");
+        Assert.AreEqual("My", person.FirstName);
+    }
+
+    [Test]
     public void Should_Create_Instance_Of_Specified_Type()
     {
       var plant = new BasePlant();
@@ -200,7 +224,7 @@ namespace Plant.Tests
   }
   namespace TestBlueprints
   {
-    class TestBlueprint : Blueprint
+    class TestBlueprint : IBlueprint
     {
       public void SetupPlant(BasePlant plant)
       {
