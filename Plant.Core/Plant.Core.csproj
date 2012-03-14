@@ -41,7 +41,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BasePlant.cs" />
-    <Compile Include="Blueprint.cs" />
+    <Compile Include="IBlueprint.cs" />
     <Compile Include="CreationStrategy.cs" />
     <Compile Include="PropertyData.cs" />
     <Compile Include="LazyPropertyHasWrongTypeException.cs" />
