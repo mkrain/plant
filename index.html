@@ -1,0 +1,177 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>Plant by jbrechtel</title>
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/pygment_trac.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+    <script src="javascripts/respond.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <!--[if lt IE 8]>
+    <link rel="stylesheet" href="stylesheets/ie.css">
+    <![endif]-->
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+
+  </head>
+  <body>
+
+      <div id="header">
+        <nav>
+          <li class="fork"><a href="https://github.com/jbrechtel/plant">Fork On GitHub</a></li>
+          <li class="downloads"><a href="https://github.com/jbrechtel/plant/zipball/master">ZIP</a></li>
+          <li class="downloads"><a href="https://github.com/jbrechtel/plant/tarball/master">TAR</a></li>
+          <li class="title">DOWNLOADS</li>
+        </nav>
+      </div><!-- end header -->
+
+    <div class="wrapper">
+
+      <section>
+        <div id="title">
+          <h1>Plant</h1>
+          <p>A generic helper factory for .NET</p>
+          <hr>
+          <span class="credits left">Project maintained by <a href="https://github.com/jbrechtel">jbrechtel</a></span>
+          <span class="credits right">Hosted on GitHub Pages &mdash; Theme by <a href="https://twitter.com/#!/michigangraham">mattgraham</a></span>
+        </div>
+
+        <h1>Plant</h1>
+
+<p>Plant is a test factory for .NET 4.0.  It is very much like FactoryGirl (<a href="http://github.com/thoughtbot/factory_girl/">http://github.com/thoughtbot/factory_girl/</a>) for Ruby.  The goal of this project is to allow you to reduce noise and duplication across your tests when creating models.  </p>
+
+<h2>Features</h2>
+
+<p>Currently Plant supports</p>
+
+<ul>
+<li>Object creation via properties</li>
+<li>Object creation by constructor arguments</li>
+<li>Overriding default property and constructor argument values</li>
+<li>Modular object definition</li>
+<li>Lazily evaluated property and constructor argument values</li>
+<li>Sequenced properties</li>
+<li>Allow user to specify after-create actions on models (to save the model to the DB after creation, for instance)</li>
+</ul><p>Targetted features can be found in the issues list for the project.  Some specific ones are</p>
+
+<ul>
+<li>Allowing multiple different definitions for one object</li>
+<li>Specify associated instances</li>
+</ul><h2>Terms</h2>
+
+<p>A 'Plant' is the thing that creates your objects for you.<br>
+A 'Blueprint' is what a user provides to tell a plant how to create an object.</p>
+
+<h2>Defining a Blueprint</h2>
+
+<p>A Blueprint is just a class that implements the Blueprint interface.  The interface defines one method, SetupPlant, which takes a BasePlant object.  SetupPlant is a generic method which whose generic argument is the Type that you're setting up and an anonymous object with the appropriate properties.</p>
+
+<p>Note that currently property validation occurs during object creation, not DefinePropertiesOf.</p>
+
+<pre><code>class PersonBlueprint : Blueprint
+{
+  public void SetupPlant(BasePlant plant)
+  {
+    plant.DefinePropertiesOf&lt;Person&gt;(new
+                           {
+                              FirstName = "Barbara",
+                              MiddleName = "Elaine",
+                              LastName = "Brechtel",
+                              Address = "111 South Main St.",
+                              City = "Gulfport",
+                              State = "MS",
+                              EmailAddress = "barbara@brechtel.com"s
+                           });
+  }
+}
+</code></pre>
+
+<p>Use DefineConstructionOf instead of DefinePropertiesOf when an object should be created via constructor arguments.</p>
+
+<pre><code>class PersonBlueprint : Blueprint
+{
+  public void SetupPlant(BasePlant plant)
+  {
+    plant.DefineConstructionOf&lt;Person&gt;(new
+                           {
+                              FirstName = "Barbara",
+                              MiddleName = "Elaine",
+                              LastName = "Brechtel",
+                              Address = "111 South Main St.",
+                              City = "Gulfport",
+                              State = "MS",
+                              EmailAddress = "barbara@brechtel.com"s
+                           });
+  }
+}
+</code></pre>
+
+<h2>Lazily evaluated properties</h2>
+
+<p>To define a Blueprint with a lazily evaluated property, set the value to new LazyProperty(lambda) like so:</p>
+
+<pre><code>class PersonBlueprint : Blueprint
+{
+  public void SetupPlant(BasePlant plant)
+  {
+    plant.DefinePropertiesOf&lt;Person&gt;(new
+                           {
+                              UniqueID = new LazyProperty&lt;int&gt;(() =&gt; IDGenerator.GenerateNewID())
+                           });
+  }
+}
+</code></pre>
+
+<p>where TPropertyType (int in this case) is the type of the property and also that returned from the lambda.</p>
+
+<h2>Sequenced properties</h2>
+
+<p>To define a Blueprint property that is evaluated lazily, but with a sequence counter, set the value to new Sequence(lambda) like so:</p>
+
+<pre><code>class PersonBlueprint : Blueprint
+{
+  public void SetupPlant(BasePlant plant)
+  {
+    plant.DefinePropertiesOf&lt;Person&gt;(new
+                           {
+                              ID = new Sequence&lt;int&gt;((sequenceValue) =&gt; sequenceValue)
+                              Name = new Sequence&lt;int&gt;((sequenceValue) =&gt; "test: " + sequenceValue)
+                           });
+  }
+}
+</code></pre>
+
+<p>where TPropertyType (int in this case) is the type of the property and also that returned from the lambda.</p>
+
+<h2>Usage</h2>
+
+<p>To create a new Plant, you'll typically want to tell it which Assembly to look in for Blueprints.  You can do this via</p>
+
+<pre><code>var plant = new BasePlant().WithBlueprintsFromAssemblyOf&lt;PersonBlueprint&gt;();
+</code></pre>
+
+<p>where PersonBlueprint is one of the Blueprints you have defined.  Plant will then load blueprints from any other type that implements the Blueprint interface in that assembly.</p>
+
+<p>To retrieve the default instance of an object</p>
+
+<pre><code>var person = plant.Create&lt;Person&gt;();
+</code></pre>
+
+<p>To retrieve an instance of a person with specific parts of the default blueprint overridden</p>
+
+<pre><code>var person = plant.Create&lt;Person&gt;(new { EmailAddress = "john@doe.com" });
+</code></pre>
+
+<p>Multiple properties can be overridden in one call</p>
+
+<pre><code>var person = plant.Create&lt;Person&gt;(new { EmailAddress = "john@doe.com", State = "GA" });
+</code></pre>
+      </section>
+
+    </div>
+    <!--[if !IE]><script>fixScale(document);</script><!--<![endif]-->
+  </body>
+</html>
