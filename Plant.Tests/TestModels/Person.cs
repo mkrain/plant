@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace Plant.Tests.TestModels
 {
   public class Person
@@ -7,5 +9,6 @@ namespace Plant.Tests.TestModels
     public string LastName { get; set; }
     public string FullName { get; set; }
 
+    public House HouseWhereILive { get; set; }
   }
 }
