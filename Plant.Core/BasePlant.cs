@@ -40,6 +40,7 @@ namespace Plant.Core
     private readonly CreatedBlueprints createdBluePrints = new CreatedBlueprints();
     private readonly IDictionary<Type, CreationStrategy> creationStrategies = new Dictionary<Type, CreationStrategy>();
     private readonly IDictionary<Type, object> postBuildActions = new Dictionary<Type, object>();
+    private readonly IDictionary<string, object> postBuildVariationActions = new Dictionary<string, object>();
     private readonly IDictionary<Type, int> sequenceValues = new Dictionary<Type, int>();
 
     #region BluePrintCreated Event
@@ -122,7 +123,10 @@ namespace Plant.Core
 
     public virtual T Create<T>(object userSpecifiedProperties = null, string variation = null, bool created = true)
     {
-      string bluePrintKey = string.Format("{0}-{1}", typeof (T), variation);
+      // If the object already exist, let's retrieve it and not generate it again.
+      // We need to see how to deal with Sequence and Lazy properties, as they will not work with this.
+      // But this feature allows to quickly create objects, related to each other in the Plants.
+      string bluePrintKey = BluePrintKey<T>(variation);
       if (createdBluePrints.ContainsKey(bluePrintKey))
           return (T)createdBluePrints[bluePrintKey];
 
@@ -153,18 +157,27 @@ namespace Plant.Core
       if (postBuildActions.ContainsKey(typeof(T)))
         ((Action<T>)postBuildActions[typeof (T)])(constructedObject);
 
-      OnBluePrintCreated(new BluePrintEventArgs(constructedObject));
+      if (postBuildVariationActions.ContainsKey(bluePrintKey))
+          ((Action<T>)postBuildVariationActions[bluePrintKey])(constructedObject);
+
+      if (created)
+          OnBluePrintCreated(new BluePrintEventArgs(constructedObject));
 
       createdBluePrints.Add(bluePrintKey, constructedObject);
       return constructedObject;
     }
-    
-    private void UpdateProperties<T>(T constructedObject, string variation)
+
+      private static string BluePrintKey<T>(string variation)
+      {
+          return string.Format("{0}-{1}", typeof (T), variation);
+      }
+
+      private void UpdateProperties<T>(T constructedObject, string variation)
     {
         if (string.IsNullOrEmpty(variation))
             return;
 
-        SetProperties(propertyVariations[string.Format("{0}{1}", typeof(T), variation)], constructedObject);
+        SetProperties(propertyVariations[BluePrintKey<T>(variation)], constructedObject);
     } 
 
     private CreationStrategy StrategyFor<T>()
@@ -257,9 +270,22 @@ namespace Plant.Core
         DefineVariationOf<T>(variation, (object)defaults);
     }
 
+    public virtual void DefineVariationOf<T>(string variation, T defaults, Action<T> afterPropertyPopulation)
+    {
+        DefineVariationOf<T>(variation, (object)defaults);
+        postBuildVariationActions[BluePrintKey<T>(variation)] = afterPropertyPopulation;
+    }
+
     public virtual void DefineVariationOf<T>(string variation, object defaults)
     {
-        propertyVariations.Add(string.Format("{0}{1}", typeof(T), variation), ToPropertyList(defaults));
+        propertyVariations.Add(BluePrintKey<T>(variation), ToPropertyList(defaults));
+    }
+
+    public virtual void DefineVariationOf<T>(string variation, object defaults, Action<T> afterPropertyPopulation)
+    {
+        string hash = BluePrintKey<T>(variation);
+        propertyVariations.Add(hash, ToPropertyList(defaults));
+        postBuildVariationActions[hash] = afterPropertyPopulation;
     }
 
     public void DefineConstructionOf<T>(object defaults, Action<T> afterCtorPopulation)

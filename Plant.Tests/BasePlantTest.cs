@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Linq.Expressions;
 using NUnit.Framework;
 using Plant.Core;
@@ -69,6 +70,28 @@ namespace Plant.Tests
     }
 
     [Test]
+    public void Should_Create_Variation_With_Extension()
+    {
+        var plant = new BasePlant();
+        plant.DefinePropertiesOf<House>(new House { Color = "blue" }, OnPropertyPopulation);
+        plant.DefineVariationOf<House>("My", new House { Color = "My" }, OnPropertyPopulationVariatoion);
+
+        Assert.AreEqual(plant.Create<House>().Persons.First().FirstName, "Pablo");
+        Assert.AreEqual(plant.Create<House>("My").Persons.First().FirstName, "Pedro");
+    }
+
+      private static void OnPropertyPopulation(House h)
+      {
+          h.Persons.Add(new Person() {FirstName = "Pablo"});
+      }
+
+      private static void OnPropertyPopulationVariatoion(House h)
+      {
+          h.Persons.Clear();
+          h.Persons.Add(new Person() { FirstName = "Pedro" });
+      }
+
+      [Test]
     public void Should_Create_Variation_Of_Specified_Type_With_Correct_Data()
     {
         var plant = new BasePlant();
