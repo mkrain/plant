@@ -156,18 +156,19 @@ namespace Plant.Core
 
       UpdateProperties<T>(constructedObject, variation);
 
-      if (postBuildActions.ContainsKey(typeof(T)))
-        ((Action<T>)postBuildActions[typeof (T)])(constructedObject);
-
       string bluePrintKey = BluePrintKey<T>(variation);
-      if (postBuildVariationActions.ContainsKey(bluePrintKey))
-          ((Action<T>)postBuildVariationActions[bluePrintKey])(constructedObject);
 
       if (created)
           OnBluePrintCreated(new BluePrintEventArgs(constructedObject));
 
       if (!createdBluePrints.ContainsKey(bluePrintKey))
           createdBluePrints.Add(bluePrintKey, constructedObject);
+
+      if (postBuildActions.ContainsKey(typeof(T)))
+        ((Action<T>)postBuildActions[typeof (T)])(constructedObject);
+
+      if (postBuildVariationActions.ContainsKey(bluePrintKey))
+          ((Action<T>)postBuildVariationActions[bluePrintKey])(constructedObject);
 
       return constructedObject;
     }
