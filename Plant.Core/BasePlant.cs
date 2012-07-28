@@ -139,11 +139,12 @@ namespace Plant.Core
         constructedObject = CreateViaProperties<T>(userSpecifiedPropertyList);
 
       // We should check if for the object properties we have a creation strategy and call create on that one.
+      // Also if the property has a value, don't override.
       foreach(var prop in constructedObject.GetType().GetProperties())
       {
-          if (StrategyFor(prop.PropertyType) == null)
+          if (StrategyFor(prop.PropertyType) == null || prop.GetValue(constructedObject, null) != null)
               continue;
-
+          
           var value = this.GetType().
               GetMethod("CreateForChild").
               MakeGenericMethod(prop.PropertyType).
@@ -256,6 +257,12 @@ namespace Plant.Core
     public virtual void DefinePropertiesOf<T>(T defaults)
     {
         DefinePropertiesOf<T>((object)defaults);
+    }
+
+    public virtual void DefinePropertiesOf<T>(T defaults, Action<T> afterPropertyPopulation)
+    {
+        DefinePropertiesOf<T>((object)defaults);
+        postBuildActions[typeof(T)] = afterPropertyPopulation;
     }
 
     public virtual void DefinePropertiesOf<T>(object defaults)

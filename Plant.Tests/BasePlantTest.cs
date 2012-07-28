@@ -45,6 +45,19 @@ namespace Plant.Tests
     }
 
     [Test]
+    public void Should_Not_Prefill_Relation_Defined()
+    {
+        var plant = new BasePlant();
+        plant.DefinePropertiesOf(new House() { Color = "blue", SquareFoot = 50 });
+        plant.DefinePropertiesOf(new Person() { FirstName = "Leo", HouseWhereILive = new House() { Color = "Violet" }});
+
+        var house = plant.Create<House>();
+        var person = plant.Create<Person>();
+
+        Assert.AreEqual("Violet", person.HouseWhereILive.Color);
+    }
+
+    [Test]
     public void Should_Build_Relation()
     {
         var plant = new BasePlant();
