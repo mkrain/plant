@@ -11,6 +11,51 @@ namespace Plant.Tests
   public class BasePlantTest
   {
     [Test]
+    public void Is_Event_Created_Called()
+    {
+        var plant = new BasePlant();
+        plant.DefinePropertiesOf(new House() { Color = "blue", SquareFoot = 50 });
+        plant.DefinePropertiesOf(new Person() { FirstName = "Leo" });
+
+        plant.BluePrintCreated += new BluePrintCreatedEventHandler(plant_BluePrintCreated);
+        var house = plant.Create<House>();
+        var person = plant.Create<Person>();
+    }
+
+    void plant_BluePrintCreated(object sender, BluePrintEventArgs e)
+    {
+        Assert.IsNotNull(e.ObjectConstructed);
+    }
+
+    [Test]
+    public void Should_Prefill_Relation()
+    {
+        var plant = new BasePlant();
+        plant.DefinePropertiesOf(new House() { Color = "blue", SquareFoot = 50 });
+        plant.DefinePropertiesOf(new Person() { FirstName = "Leo" });
+
+        var house = plant.Create<House>();
+        var person = plant.Create<Person>();
+
+        Assert.IsNotNull(person.HouseWhereILive);
+        Assert.AreEqual(house, person.HouseWhereILive);
+        Assert.AreEqual(house.Color, person.HouseWhereILive.Color);
+        Assert.AreEqual(house.SquareFoot, person.HouseWhereILive.SquareFoot);
+    }
+
+    [Test]
+    public void Should_Build_Relation()
+    {
+        var plant = new BasePlant();
+        plant.DefinePropertiesOf(new House() { Color = "blue", SquareFoot = 50 });
+        plant.DefinePropertiesOf(new Person() { FirstName = "Leo" });
+
+        var person = plant.Build<Person>();
+
+        Assert.IsNotNull(person.HouseWhereILive);
+    }
+
+    [Test]
     public void Should_Create_Variation_Of_Specified_Type()
     {
         var plant = new BasePlant();

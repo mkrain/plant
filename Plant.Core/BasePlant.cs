@@ -5,17 +5,54 @@ using System.Reflection;
 using Properties = System.Collections.Generic.IDictionary<Plant.Core.PropertyData, object>;
 using Blueprints = System.Collections.Generic.Dictionary<System.Type, System.Collections.Generic.IDictionary<Plant.Core.PropertyData, object>>;
 using Variations = System.Collections.Generic.Dictionary<string, System.Collections.Generic.IDictionary<Plant.Core.PropertyData, object>>;
+using CreatedBlueprints = System.Collections.Generic.Dictionary<string, object>;
 
 namespace Plant.Core
 {
+  #region Events
+
+    public class BluePrintEventArgs : EventArgs
+    {
+        private object _objectConstructed;
+
+        public BluePrintEventArgs(object objectConstructed)
+        {
+            this._objectConstructed = objectConstructed;
+        }
+
+        public object ObjectConstructed
+        {
+            get
+            {
+                return _objectConstructed;
+            }
+        }
+    }
+
+    public delegate void BluePrintCreatedEventHandler(object sender, BluePrintEventArgs e);
+    #endregion
+
   public class BasePlant
   {
     private readonly Variations propertyVariations = new Variations();
     private readonly Blueprints propertyBlueprints = new Blueprints();
     private readonly Blueprints constructorBlueprints = new Blueprints();
+    private readonly CreatedBlueprints createdBluePrints = new CreatedBlueprints();
     private readonly IDictionary<Type, CreationStrategy> creationStrategies = new Dictionary<Type, CreationStrategy>();
     private readonly IDictionary<Type, object> postBuildActions = new Dictionary<Type, object>();
     private readonly IDictionary<Type, int> sequenceValues = new Dictionary<Type, int>();
+
+    #region BluePrintCreated Event
+
+    public event BluePrintCreatedEventHandler BluePrintCreated;
+
+    protected virtual void OnBluePrintCreated(BluePrintEventArgs e)
+    {
+        if (BluePrintCreated != null)
+            BluePrintCreated(this, e);
+    }
+
+    #endregion
 
     private T CreateViaProperties<T>(Properties userProperties)
     {
@@ -58,6 +95,21 @@ namespace Plant.Core
       return Activator.CreateInstance<T>();
     }
 
+    public virtual T CreateForChild<T>()
+    {
+        return Create<T>(null, null);
+    }
+
+    public virtual T Build<T>(string variation = null)
+    {
+        return Create<T>(null, variation, false);
+    }
+
+    public virtual T Build<T>(T userSpecifiedProperties)
+    {
+        return Create<T>((object)userSpecifiedProperties, null, false);
+    }
+
     public virtual T Create<T>(string variation)
     {
         return Create<T>(null, variation);
@@ -68,8 +120,12 @@ namespace Plant.Core
         return Create<T>((object)userSpecifiedProperties);
     }
 
-    public virtual T Create<T>(object userSpecifiedProperties = null, string variation = null)
+    public virtual T Create<T>(object userSpecifiedProperties = null, string variation = null, bool created = true)
     {
+      string bluePrintKey = string.Format("{0}-{1}", typeof (T), variation);
+      if (createdBluePrints.ContainsKey(bluePrintKey))
+          return (T)createdBluePrints[bluePrintKey];
+
       var userSpecifiedPropertyList = ToPropertyList(userSpecifiedProperties);
 
       T constructedObject = default(T);
@@ -78,11 +134,28 @@ namespace Plant.Core
       else
         constructedObject = CreateViaProperties<T>(userSpecifiedPropertyList);
 
+      // We should check if for the object properties we have a creation strategy and call create on that one.
+      foreach(var prop in constructedObject.GetType().GetProperties())
+      {
+          if (StrategyFor(prop.PropertyType) == null)
+              continue;
+
+          var value = this.GetType().
+              GetMethod("CreateForChild").
+              MakeGenericMethod(prop.PropertyType).
+              Invoke(this, null);
+
+          prop.SetValue(constructedObject, value, null);
+      }
+
       UpdateProperties<T>(constructedObject, variation);
 
       if (postBuildActions.ContainsKey(typeof(T)))
         ((Action<T>)postBuildActions[typeof (T)])(constructedObject);
-        
+
+      OnBluePrintCreated(new BluePrintEventArgs(constructedObject));
+
+      createdBluePrints.Add(bluePrintKey, constructedObject);
       return constructedObject;
     }
     
@@ -99,6 +172,13 @@ namespace Plant.Core
       if(creationStrategies.ContainsKey(typeof(T)))
         return creationStrategies[typeof (T)];
       throw new TypeNotSetupException(string.Format("No creation strategy defined for type: {0}", typeof(T)));
+    }
+
+    private CreationStrategy? StrategyFor(Type t)
+    {
+        if (creationStrategies.ContainsKey(t))
+            return creationStrategies[t];
+        return null;
     }
 
     private void SetProperties<T>(Properties properties, T instance)
