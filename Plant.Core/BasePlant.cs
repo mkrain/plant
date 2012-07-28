@@ -98,7 +98,15 @@ namespace Plant.Core
 
     public virtual T CreateForChild<T>()
     {
-        return Create<T>(null, null);
+        string bluePrintKey = BluePrintKey<T>(null);
+        T constructedObject;
+
+        if (createdBluePrints.ContainsKey(bluePrintKey))
+            constructedObject = (T)createdBluePrints[bluePrintKey];
+        else
+            constructedObject = Create<T>(null, null);
+
+        return constructedObject;
     }
 
     public virtual T Build<T>(string variation = null)
@@ -123,13 +131,6 @@ namespace Plant.Core
 
     public virtual T Create<T>(object userSpecifiedProperties = null, string variation = null, bool created = true)
     {
-      // If the object already exist, let's retrieve it and not generate it again.
-      // We need to see how to deal with Sequence and Lazy properties, as they will not work with this.
-      // But this feature allows to quickly create objects, related to each other in the Plants.
-      string bluePrintKey = BluePrintKey<T>(variation);
-      if (createdBluePrints.ContainsKey(bluePrintKey))
-          return (T)createdBluePrints[bluePrintKey];
-
       var userSpecifiedPropertyList = ToPropertyList(userSpecifiedProperties);
 
       T constructedObject = default(T);
@@ -158,13 +159,16 @@ namespace Plant.Core
       if (postBuildActions.ContainsKey(typeof(T)))
         ((Action<T>)postBuildActions[typeof (T)])(constructedObject);
 
+      string bluePrintKey = BluePrintKey<T>(variation);
       if (postBuildVariationActions.ContainsKey(bluePrintKey))
           ((Action<T>)postBuildVariationActions[bluePrintKey])(constructedObject);
 
       if (created)
           OnBluePrintCreated(new BluePrintEventArgs(constructedObject));
 
-      createdBluePrints.Add(bluePrintKey, constructedObject);
+      if (!createdBluePrints.ContainsKey(bluePrintKey))
+          createdBluePrints.Add(bluePrintKey, constructedObject);
+
       return constructedObject;
     }
 

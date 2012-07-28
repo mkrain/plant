@@ -2,8 +2,8 @@ namespace Plant.Tests.TestModels
 {
   public class Book
   {
-    public readonly string Author;
-    public readonly string Publisher;
+    public string Author  { get; set; }
+    public string Publisher { get; set; }
 
     public Book(string author, string publisher)
     {

@@ -11,6 +11,20 @@ namespace Plant.Tests
   [TestFixture]
   public class BasePlantTest
   {
+      [Test]
+      public void Can_Create_Two_Different_House()
+      {
+          var plant = new BasePlant();
+          plant.DefinePropertiesOf(new House() { Color = "blue", SquareFoot = 50 });
+          plant.DefinePropertiesOf(new Person() { FirstName = "Leo" });
+
+          var house = plant.Create<House>();
+          var redHouse = plant.Create<House>(new House() { Color = "red"});
+
+          Assert.AreNotEqual(house, redHouse);
+          Assert.AreNotEqual(house.Color, redHouse.Color);
+      }
+
     [Test]
     public void Is_Event_Created_Called()
     {
@@ -32,8 +46,8 @@ namespace Plant.Tests
     public void Should_Prefill_Relation()
     {
         var plant = new BasePlant();
-        plant.DefinePropertiesOf(new House() { Color = "blue", SquareFoot = 50 });
-        plant.DefinePropertiesOf(new Person() { FirstName = "Leo" });
+        plant.DefinePropertiesOf<House>(new House() { Color = "blue", SquareFoot = 50 });
+        plant.DefinePropertiesOf<Person>(new Person() { FirstName = "Leo" });
 
         var house = plant.Create<House>();
         var person = plant.Create<Person>();

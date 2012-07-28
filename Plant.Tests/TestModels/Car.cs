@@ -2,7 +2,7 @@ namespace Plant.Tests.TestModels
 {
   public class Car
   {
-    public readonly string Make;
+    public string Make { get; set; }
 
     public Car(string make)
     {
