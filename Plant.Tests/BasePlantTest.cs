@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Linq.Expressions;
 using NUnit.Framework;
 using Plant.Core;
@@ -10,6 +11,20 @@ namespace Plant.Tests
   [TestFixture]
   public class BasePlantTest
   {
+      [Test]
+      public void Can_Create_Two_Different_House()
+      {
+          var plant = new BasePlant();
+          plant.DefinePropertiesOf(new House() { Color = "blue", SquareFoot = 50 });
+          plant.DefinePropertiesOf(new Person() { FirstName = "Leo" });
+
+          var house = plant.Create<House>();
+          var redHouse = plant.Create<House>(new House() { Color = "red"});
+
+          Assert.AreNotEqual(house, redHouse);
+          Assert.AreNotEqual(house.Color, redHouse.Color);
+      }
+
     [Test]
     public void Is_Event_Created_Called()
     {
@@ -31,8 +46,8 @@ namespace Plant.Tests
     public void Should_Prefill_Relation()
     {
         var plant = new BasePlant();
-        plant.DefinePropertiesOf(new House() { Color = "blue", SquareFoot = 50 });
-        plant.DefinePropertiesOf(new Person() { FirstName = "Leo" });
+        plant.DefinePropertiesOf<House>(new House() { Color = "blue", SquareFoot = 50 });
+        plant.DefinePropertiesOf<Person>(new Person() { FirstName = "Leo" });
 
         var house = plant.Create<House>();
         var person = plant.Create<Person>();
@@ -41,6 +56,19 @@ namespace Plant.Tests
         Assert.AreEqual(house, person.HouseWhereILive);
         Assert.AreEqual(house.Color, person.HouseWhereILive.Color);
         Assert.AreEqual(house.SquareFoot, person.HouseWhereILive.SquareFoot);
+    }
+
+    [Test]
+    public void Should_Not_Prefill_Relation_Defined()
+    {
+        var plant = new BasePlant();
+        plant.DefinePropertiesOf(new House() { Color = "blue", SquareFoot = 50 });
+        plant.DefinePropertiesOf(new Person() { FirstName = "Leo", HouseWhereILive = new House() { Color = "Violet" }});
+
+        var house = plant.Create<House>();
+        var person = plant.Create<Person>();
+
+        Assert.AreEqual("Violet", person.HouseWhereILive.Color);
     }
 
     [Test]
@@ -69,6 +97,28 @@ namespace Plant.Tests
     }
 
     [Test]
+    public void Should_Create_Variation_With_Extension()
+    {
+        var plant = new BasePlant();
+        plant.DefinePropertiesOf<House>(new House { Color = "blue" }, OnPropertyPopulation);
+        plant.DefineVariationOf<House>("My", new House { Color = "My" }, OnPropertyPopulationVariatoion);
+
+        Assert.AreEqual(plant.Create<House>().Persons.First().FirstName, "Pablo");
+        Assert.AreEqual(plant.Create<House>("My").Persons.First().FirstName, "Pedro");
+    }
+
+      private static void OnPropertyPopulation(House h)
+      {
+          h.Persons.Add(new Person() {FirstName = "Pablo"});
+      }
+
+      private static void OnPropertyPopulationVariatoion(House h)
+      {
+          h.Persons.Clear();
+          h.Persons.Add(new Person() { FirstName = "Pedro" });
+      }
+
+      [Test]
     public void Should_Create_Variation_Of_Specified_Type_With_Correct_Data()
     {
         var plant = new BasePlant();
