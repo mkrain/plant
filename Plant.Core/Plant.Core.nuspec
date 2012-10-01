@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<package >
+  <metadata>
+    <id>Plant.Core</id>
+    <version>$version$</version>
+    <title>Plant</title>
+    <authors>James Brechtel</authors>
+    <projectUrl>https://github.com/jbrechtel/plant</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>Plant is a test factory for .NET 4.0. It is very much like FactoryGirl (http://github.com/thoughtbot/factory_girl/) for Ruby. The goal of this project is to allow you to reduce noise and duplication across your tests when creating models.</description>
+    <summary>A generic helper factory for .NET</summary>
+    <copyright>Copyright 2012</copyright>
+    <tags>test factory blueprint factory_girl</tags>
+  </metadata>
+  <files>
+    <file src="bin\Release\Plant.Core.dll" target="lib\net40" />
+  </files>
+ </package>
