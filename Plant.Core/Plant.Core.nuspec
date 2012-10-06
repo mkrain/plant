@@ -2,7 +2,7 @@
 <package >
   <metadata>
     <id>Plant.Core</id>
-    <version>$version$</version>
+    <version>0.1.0.0</version>
     <title>Plant</title>
     <authors>James Brechtel</authors>
     <projectUrl>https://github.com/jbrechtel/plant</projectUrl>
