@@ -6,8 +6,8 @@ Plant is a test factory for .NET 4.0.  It is very much like FactoryGirl (http://
 Download
 --------
 
-Github: http://github.com/jbrechtel/plant
-Nu:  (SOON!)
+* Github: http://github.com/jbrechtel/plant
+* NuGet:  https://nuget.org/packages/Plant (Thanks Chris Micacchi!)
 
 
 Features
