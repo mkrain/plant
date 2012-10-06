@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package >
   <metadata>
-    <id>Plant.Core</id>
+    <id>Plant</id>
     <version>0.1.0.0</version>
     <title>Plant</title>
     <authors>James Brechtel</authors>
