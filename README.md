@@ -108,7 +108,7 @@ To define a Blueprint property that is evaluated lazily, but with a sequence cou
         plant.DefinePropertiesOf<Person>(new
                                {
                                   ID = new Sequence<int>((sequenceValue) => sequenceValue)
-                                  Name = new Sequence<int>((sequenceValue) => "test: " + sequenceValue)
+                                  Name = new Sequence<string>((sequenceValue) => "test: " + sequenceValue)
                                });
       }
     }
