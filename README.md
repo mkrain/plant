@@ -54,7 +54,7 @@ Note that currently property validation occurs during object creation, not Defin
                                   Address = "111 South Main St.",
                                   City = "Gulfport",
                                   State = "MS",
-                                  EmailAddress = "barbara@brechtel.com"s
+                                  EmailAddress = "barbara@brechtel.com"
                                });
       }
     }
@@ -73,7 +73,7 @@ Use DefineConstructionOf instead of DefinePropertiesOf when an object should be 
                                   Address = "111 South Main St.",
                                   City = "Gulfport",
                                   State = "MS",
-                                  EmailAddress = "barbara@brechtel.com"s
+                                  EmailAddress = "barbara@brechtel.com"
                                });
       }
     }
