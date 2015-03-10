@@ -57,7 +57,20 @@ namespace Plant.Tests
         Assert.AreEqual(house.SquareFoot, person.HouseWhereILive.SquareFoot);
     }
 
-    [Test]
+      [Test]
+      public void Should_Prefill_Relation_As_Collection()
+      {
+          var plant = new BasePlant();
+          plant.DefinePropertiesOf(new Car("Test"));
+          plant.DefinePropertiesOf(new AutoFactory());
+
+          var factory = plant.Create<AutoFactory>();
+
+          Assert.IsNotNull(factory.Cars);
+          Assert.AreEqual(1, factory.Cars.Count());
+      }
+
+      [Test]
     public void Should_Not_Prefill_Relation_Defined()
     {
         var plant = new BasePlant();

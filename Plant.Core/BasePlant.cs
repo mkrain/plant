@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -133,7 +134,7 @@ namespace Plant.Core
     {
       var userSpecifiedPropertyList = ToPropertyList(userSpecifiedProperties);
 
-      T constructedObject = default(T);
+      T constructedObject;
       if(StrategyFor<T>() == CreationStrategy.Constructor)
         constructedObject = CreateViaConstructor<T>(userSpecifiedPropertyList);
       else
@@ -143,7 +144,24 @@ namespace Plant.Core
       // Also if the property has a value, don't override.
       foreach(var prop in constructedObject.GetType().GetProperties())
       {
-          if (StrategyFor(prop.PropertyType) == null || prop.GetValue(constructedObject, null) != null)
+          //Found a generic list, look for the blueprint
+          if(prop.PropertyType.IsGenericType)
+          {
+              var enumerableType = GetEnumerableType(prop.PropertyType);
+
+              if(StrategyFor(enumerableType) == null)
+              {
+                  continue;
+              }
+
+              var list = this.CreateGenericList(enumerableType);
+
+              prop.SetValue(constructedObject, list, null);
+
+              continue;
+          }
+
+          if(StrategyFor(prop.PropertyType) == null || prop.GetValue(constructedObject, null) != null)
               continue;
           
           var value = this.GetType().
@@ -173,6 +191,22 @@ namespace Plant.Core
       return constructedObject;
     }
 
+      private object CreateGenericList(Type instance)
+      {
+          Type listType = typeof(List<>);
+          Type genericType = listType.MakeGenericType(instance);
+          var target = Activator.CreateInstance(genericType);
+
+          var value = this.GetType().
+              GetMethod("CreateForChild").
+              MakeGenericMethod(instance).
+              Invoke(this, null);
+
+          target.GetType().GetMethod("Add").Invoke(target, new[] { value });
+
+          return target;
+      }
+
       private static string BluePrintKey<T>(string variation)
       {
           return string.Format("{0}-{1}", typeof (T), variation);
@@ -200,7 +234,27 @@ namespace Plant.Core
         return null;
     }
 
-    private void SetProperties<T>(Properties properties, T instance)
+      private static Type GetEnumerableType(Type type)
+      {
+          foreach (var intType in type.GetInterfaces())
+          {
+              if( intType.IsGenericType 
+              && (intType.GetGenericTypeDefinition() == typeof (IEnumerable<>)
+              ||  intType.GetGenericTypeDefinition() == typeof (IList<>)))
+              {
+                  return intType.GetGenericArguments()[0];
+              }
+              
+              if(intType == typeof(IEnumerable))
+              {
+                  return type.GetGenericArguments()[0];
+              }
+          }
+
+          return null;
+      }
+
+      private void SetProperties<T>(Properties properties, T instance)
     {
       properties.Keys.ToList().ForEach(property =>
         {
